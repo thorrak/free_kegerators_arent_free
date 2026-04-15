@@ -82,33 +82,37 @@ void loop() {
     // Adjust format based on your Arduino firmware version
     
     // Handle everything for the first payload
-    snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber1, pulseCount1);
+    if(pulseCount1 > 0) {
+      snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber1, pulseCount1);
 
-    // Alternative JSON format (if your setup uses JSON):
-    // snprintf(payload, sizeof(payload),
-    //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
-    //          tapNumber, pulseCount);
+      // Alternative JSON format (if your setup uses JSON):
+      // snprintf(payload, sizeof(payload),
+      //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
+      //          tapNumber, pulseCount);
 
-    client.publish("rpints/pours", payload);
-    Serial.print("Sent: ");
-    Serial.println(payload);
+      client.publish("rpints/pours", payload);
+      Serial.print("Sent: ");
+      Serial.println(payload);
 
-    pulseCount1 = 0;
+      pulseCount1 = 0;
+  }
 
 
     // Then handle everything for the second payload 
-    snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
+    if(pulseCount2 > 0) { 
+      snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
 
-    // Alternative JSON format (if your setup uses JSON):
-    // snprintf(payload, sizeof(payload),
-    //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
-    //          tapNumber, pulseCount);
+      // Alternative JSON format (if your setup uses JSON):
+      // snprintf(payload, sizeof(payload),
+      //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
+      //          tapNumber, pulseCount);
 
-    client.publish("rpints/pours", payload);
-    Serial.print("Sent: ");
-    Serial.println(payload);
+      client.publish("rpints/pours", payload);
+      Serial.print("Sent: ");
+      Serial.println(payload);
 
-    pulseCount2 = 0;
+      pulseCount2 = 0;
+    }
 
 
     lastTimeSent = millis();  // Update the time gate for the next publish

@@ -29,13 +29,12 @@ const char* mqtt_pass = "RaspberryPints";
 const int flowPin1 = D2;
 const int tapNumber1 = 4;  // Change for each tap
 volatile unsigned long pulseCount1 = 0;
-volatile unsigned long lastTime1 = 0;
+volatile unsigned long lastTimeSent = 0;  // Covers both flow sensors since they share the same publish timing
 
 // Flow Sensor 2
 const int flowPin2 = D3;
 const int tapNumber2 = 5;  // Change for each tap
 volatile unsigned long pulseCount2 = 0;
-volatile unsigned long lastTime2 = 0;
 
 // OneWire Settings
 #define SENSOR_PIN D7  // The ESP8266 pin connected to DS18B20 sensor's DQ pin
@@ -77,8 +76,7 @@ void loop() {
   client.loop();
 
   // Send pulse data every second to rpints/pours topic 
-  if (millis() - lastTime1 > 1000);
-  if (millis() - lastTime2 > 1000){
+  if (millis() - lastTimeSent > 1000){
     char payload[100];
     // Format to match Arduino serial protocol
     // Adjust format based on your Arduino firmware version
@@ -100,7 +98,7 @@ void loop() {
     pulseCount2 = 0;
     attachInterrupt(digitalPinToInterrupt(flowPin2), pulseCounter2, FALLING);
 
-    lasttime2 = millis();  // Update the time gate for the next publish
+    lastTimeSent = millis();  // Update the time gate for the next publish
   }
 
   //OneWire

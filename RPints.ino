@@ -94,9 +94,8 @@ void loop() {
     Serial.println(payload);
 
     pulseCount1 = 0;
-    attachInterrupt(digitalPinToInterrupt(flowPin1), pulseCounter1, FALLING);
 
-    
+
     // Then handle everything for the second payload 
     snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
 
@@ -110,7 +109,7 @@ void loop() {
     Serial.println(payload);
 
     pulseCount2 = 0;
-    attachInterrupt(digitalPinToInterrupt(flowPin2), pulseCounter2, FALLING);
+
 
     lastTimeSent = millis();  // Update the time gate for the next publish
   }

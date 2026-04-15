@@ -65,6 +65,7 @@ void setup() {
  
   pinMode(flowPin1, INPUT_PULLUP);
   pinMode(flowPin2, INPUT_PULLUP);
+
   attachInterrupt(digitalPinToInterrupt(flowPin1), pulseCounter1, FALLING);
   attachInterrupt(digitalPinToInterrupt(flowPin2), pulseCounter2, FALLING);
 }
@@ -98,6 +99,8 @@ void loop() {
     attachInterrupt(digitalPinToInterrupt(flowPin1), pulseCounter1, FALLING);
     pulseCount2 = 0;
     attachInterrupt(digitalPinToInterrupt(flowPin2), pulseCounter2, FALLING);
+
+    lasttime2 = millis();  // Update the time gate for the next publish
   }
 
   //OneWire

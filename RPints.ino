@@ -82,7 +82,7 @@ void loop() {
     // Adjust format based on your Arduino firmware version
     
     // Handle everything for the first payload
-    if(pulseCount1 > 0) {
+    if(pulseCount1 > 1) { // Only send if we have more than 1 pulse to avoid noise
       snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber1, pulseCount1);
 
       // Alternative JSON format (if your setup uses JSON):
@@ -94,12 +94,12 @@ void loop() {
       Serial.print("Sent: ");
       Serial.println(payload);
 
-      pulseCount1 = 0;
-  }
+    }
+    pulseCount1 = 0;
 
 
     // Then handle everything for the second payload 
-    if(pulseCount2 > 0) { 
+    if(pulseCount2 > 1) { // Only send if we have more than 1 pulse to avoid noise
       snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
 
       // Alternative JSON format (if your setup uses JSON):
@@ -111,8 +111,8 @@ void loop() {
       Serial.print("Sent: ");
       Serial.println(payload);
 
-      pulseCount2 = 0;
     }
+    pulseCount2 = 0;
 
 
     lastTimeSent = millis();  // Update the time gate for the next publish

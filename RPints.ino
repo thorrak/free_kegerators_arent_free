@@ -81,8 +81,8 @@ void loop() {
     // Format to match Arduino serial protocol
     // Adjust format based on your Arduino firmware version
     
+    // Handle everything for the first payload
     snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber1, pulseCount1);
-    snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
 
     // Alternative JSON format (if your setup uses JSON):
     // snprintf(payload, sizeof(payload),
@@ -95,6 +95,20 @@ void loop() {
 
     pulseCount1 = 0;
     attachInterrupt(digitalPinToInterrupt(flowPin1), pulseCounter1, FALLING);
+
+    
+    // Then handle everything for the second payload 
+    snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
+
+    // Alternative JSON format (if your setup uses JSON):
+    // snprintf(payload, sizeof(payload),
+    //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
+    //          tapNumber, pulseCount);
+
+    client.publish("rpints/pours", payload);
+    Serial.print("Sent: ");
+    Serial.println(payload);
+
     pulseCount2 = 0;
     attachInterrupt(digitalPinToInterrupt(flowPin2), pulseCounter2, FALLING);
 

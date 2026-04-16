@@ -29,12 +29,26 @@ const char* mqtt_pass = "RaspberryPints";
 const int flowPin1 = D2;
 const int tapNumber1 = 4;  // Change for each tap
 volatile unsigned long pulseCount1 = 0;
-volatile unsigned long lastTimeSent = 0;  // Covers both flow sensors since they share the same publish timing
 
 // Flow Sensor 2
 const int flowPin2 = D3;
 const int tapNumber2 = 5;  // Change for each tap
 volatile unsigned long pulseCount2 = 0;
+
+// Pour tracking
+const unsigned long POUR_TIMEOUT = 2000;   // ms of no flow before pour is considered done
+const unsigned long CHECK_INTERVAL = 100;  // how often to check for flow activity
+const unsigned long MIN_POUR_PULSES = 5;   // minimum pulses to count as a real pour (noise filter)
+
+bool pouring1 = false;
+unsigned long pourPulses1 = 0;
+unsigned long lastPulseTime1 = 0;
+
+bool pouring2 = false;
+unsigned long pourPulses2 = 0;
+unsigned long lastPulseTime2 = 0;
+
+unsigned long lastCheckTime = 0;
 
 // OneWire Settings
 #define SENSOR_PIN D7  // The ESP8266 pin connected to DS18B20 sensor's DQ pin
@@ -75,47 +89,73 @@ void loop() {
   }
   client.loop();
 
-  // Send pulse data every second to rpints/pours topic 
-  if (millis() - lastTimeSent > 1000){
-    char payload[100];
-    // Format to match Arduino serial protocol
-    // Adjust format based on your Arduino firmware version
-    
-    // Handle everything for the first payload
-    if(pulseCount1 > 1) { // Only send if we have more than 1 pulse to avoid noise
-      snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber1, pulseCount1);
-
-      // Alternative JSON format (if your setup uses JSON):
-      // snprintf(payload, sizeof(payload),
-      //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
-      //          tapNumber, pulseCount);
-
-      client.publish("rpints/pours", payload);
-      Serial.print("Sent: ");
-      Serial.println(payload);
-
-    }
+  // Check flow activity periodically: accumulate pulses during a pour,
+  // then publish the total once flow has stopped for POUR_TIMEOUT ms.
+  if (millis() - lastCheckTime > CHECK_INTERVAL) {
+    unsigned long count1 = pulseCount1;
     pulseCount1 = 0;
-
-
-    // Then handle everything for the second payload 
-    if(pulseCount2 > 1) { // Only send if we have more than 1 pulse to avoid noise
-      snprintf(payload, sizeof(payload), "P;%d;%d;%d", -1, tapNumber2, pulseCount2);
-
-      // Alternative JSON format (if your setup uses JSON):
-      // snprintf(payload, sizeof(payload),
-      //          "{\"tap\":\"tap%d\",\"pulses\":%d}",
-      //          tapNumber, pulseCount);
-
-      client.publish("rpints/pours", payload);
-      Serial.print("Sent: ");
-      Serial.println(payload);
-
-    }
+    unsigned long count2 = pulseCount2;
     pulseCount2 = 0;
 
+    unsigned long now = millis();
 
-    lastTimeSent = millis();  // Update the time gate for the next publish
+    // Tap 1
+    if (count1 > 0) {
+      pourPulses1 += count1;
+      lastPulseTime1 = now;
+      if (!pouring1) {
+        pouring1 = true;
+        Serial.print("Tap ");
+        Serial.print(tapNumber1);
+        Serial.println(": pour started");
+      }
+    } else if (pouring1 && (now - lastPulseTime1 > POUR_TIMEOUT)) {
+      if (pourPulses1 >= MIN_POUR_PULSES) {
+        char payload[100];
+        snprintf(payload, sizeof(payload), "P;%d;%d;%lu", -1, tapNumber1, pourPulses1);
+        client.publish("rpints/pours", payload);
+        Serial.print("Sent: ");
+        Serial.println(payload);
+      } else {
+        Serial.print("Tap ");
+        Serial.print(tapNumber1);
+        Serial.print(": discarded noise (");
+        Serial.print(pourPulses1);
+        Serial.println(" pulses)");
+      }
+      pouring1 = false;
+      pourPulses1 = 0;
+    }
+
+    // Tap 2
+    if (count2 > 0) {
+      pourPulses2 += count2;
+      lastPulseTime2 = now;
+      if (!pouring2) {
+        pouring2 = true;
+        Serial.print("Tap ");
+        Serial.print(tapNumber2);
+        Serial.println(": pour started");
+      }
+    } else if (pouring2 && (now - lastPulseTime2 > POUR_TIMEOUT)) {
+      if (pourPulses2 >= MIN_POUR_PULSES) {
+        char payload[100];
+        snprintf(payload, sizeof(payload), "P;%d;%d;%lu", -1, tapNumber2, pourPulses2);
+        client.publish("rpints/pours", payload);
+        Serial.print("Sent: ");
+        Serial.println(payload);
+      } else {
+        Serial.print("Tap ");
+        Serial.print(tapNumber2);
+        Serial.print(": discarded noise (");
+        Serial.print(pourPulses2);
+        Serial.println(" pulses)");
+      }
+      pouring2 = false;
+      pourPulses2 = 0;
+    }
+
+    lastCheckTime = now;
   }
 
   //OneWire

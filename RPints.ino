@@ -227,6 +227,8 @@ void sendTemp(float temp, const char* probe, const char* unit, const char* times
             temp,
             unit,
             timestamp);
+   Serial.print("Sending temperature: ");
+   Serial.println(payload);
 
    client.publish(mqtt_topic, payload);
 }
